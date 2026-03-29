@@ -114,39 +114,45 @@ async function lerPDF(file) {
 
 function analisarTexto(texto, nomeArquivo) {
 
-  // 🔥 limpa espaços bagunçados
+  // limpa espaços
   texto = texto.replace(/\s+/g, " ");
 
-  // 🔍 pega um trecho depois do "resultado do período"
-  const regexLinha = /resultado do período(.{0,200})/i;
-  const matchLinha = texto.match(regexLinha);
+  const index = texto.indexOf("resultado do período");
 
-  if (matchLinha) {
+  if (index !== -1) {
 
-    const trecho = matchLinha[1];
+    const depois = texto.substring(index + 22);
 
-    // 🔢 pega todos os números do trecho
-    const valores = trecho.match(/\(?\d{1,3}(\.\d{3})*,\d{2}\)?/g);
+    // pega valores SEM depender de parênteses
+    const valores = depois.match(/\d{1,3}(\.\d{3})*,\d{2}/g);
 
     if (valores && valores.length >= 4) {
 
-      const saldo = valores[3]; // 👉 4º valor
+      const saldo = valores[3];
 
-      console.log(nomeArquivo + " → valores:", valores);
-      console.log(nomeArquivo + " → saldo final:", saldo);
+      // 🔥 pega trecho ao redor do saldo
+      const posSaldo = depois.indexOf(saldo);
+      const trechoAoRedor = depois.substring(
+        Math.max(0, posSaldo - 10),
+        posSaldo + saldo.length + 10
+      );
 
-      if (saldo.includes("(") && saldo.includes(")")) {
+      console.log(nomeArquivo + " → saldo:", saldo);
+      console.log(nomeArquivo + " → trecho:", trechoAoRedor);
+
+      // 🔥 DETECÇÃO REAL (funciona mesmo com OCR quebrado)
+      if (trechoAoRedor.includes("(") && trechoAoRedor.includes(")")) {
         adicionarLista("negativos", nomeArquivo, saldo);
       } else {
         adicionarLista("positivos", nomeArquivo, saldo);
       }
 
     } else {
-      console.log(nomeArquivo + " → ERRO: não encontrou 4 valores", valores);
+      console.log(nomeArquivo + " → erro: não encontrou 4 valores", valores);
     }
 
   } else {
-    console.log(nomeArquivo + " → ERRO: não encontrou 'resultado do período'");
+    console.log(nomeArquivo + " → não encontrou 'resultado do período'");
   }
 }
 
