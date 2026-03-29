@@ -1,19 +1,17 @@
-# leitor-pdf-financeiro
-Leitor PDF
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Leitor de PDFs</title>
+  <title>Analisador de Balancete</title>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 
   <style>
     body {
       font-family: Arial;
-      text-align: center;
       background: #111;
       color: white;
+      text-align: center;
       padding: 20px;
     }
 
@@ -23,6 +21,7 @@ Leitor PDF
 
     input {
       margin: 20px;
+      padding: 10px;
     }
 
     .box {
@@ -32,8 +31,8 @@ Leitor PDF
     }
 
     .coluna {
-      width: 40%;
-      padding: 10px;
+      width: 45%;
+      padding: 15px;
       border-radius: 10px;
     }
 
@@ -44,12 +43,17 @@ Leitor PDF
     .negativo {
       background: #600;
     }
+
+    li {
+      margin: 8px 0;
+      text-align: left;
+    }
   </style>
 </head>
 
 <body>
 
-<h1>📄 Analisador de PDF</h1>
+<h1>📄 Analisador de Balancete</h1>
 
 <input type="file" id="pdfInput" multiple accept="application/pdf">
 
@@ -69,6 +73,9 @@ Leitor PDF
 const input = document.getElementById("pdfInput");
 
 input.addEventListener("change", async (event) => {
+  document.getElementById("positivos").innerHTML = "";
+  document.getElementById("negativos").innerHTML = "";
+
   const arquivos = event.target.files;
 
   for (let file of arquivos) {
@@ -94,6 +101,8 @@ async function lerPDF(file) {
         conteudo.items.forEach(item => {
           texto += item.str + " ";
         });
+
+        texto += "\n";
       }
 
       resolve(texto.toLowerCase());
@@ -104,29 +113,41 @@ async function lerPDF(file) {
 }
 
 function analisarTexto(texto, nomeArquivo) {
+
   const linhas = texto.split("\n");
 
   for (let linha of linhas) {
     if (linha.includes("resultado do período")) {
 
-      let partes = linha.trim().split(" ");
-      let saldo = partes[partes.length - 1];
+      const valores = linha.match(/\(?\d{1,3}(\.\d{3})*,\d{2}\)?/g);
 
-      if (saldo.includes("(") && saldo.includes(")")) {
-        adicionarLista("negativos", nomeArquivo);
+      if (valores && valores.length >= 4) {
+
+        const saldo = valores[3]; // 4º valor
+
+        console.log(nomeArquivo + " → saldo:", saldo);
+
+        if (saldo.includes("(") && saldo.includes(")")) {
+          adicionarLista("negativos", nomeArquivo, saldo);
+        } else {
+          adicionarLista("positivos", nomeArquivo, saldo);
+        }
+
       } else {
-        adicionarLista("positivos", nomeArquivo);
+        console.log(nomeArquivo + " → não encontrou 4 valores");
       }
 
       return;
     }
   }
+
+  console.log(nomeArquivo + " → não encontrou 'resultado do período'");
 }
 
-function adicionarLista(tipo, nome) {
+function adicionarLista(tipo, nome, saldo) {
   const ul = document.getElementById(tipo);
   const li = document.createElement("li");
-  li.textContent = nome;
+  li.textContent = `${nome} → Saldo: ${saldo}`;
   ul.appendChild(li);
 }
 </script>
