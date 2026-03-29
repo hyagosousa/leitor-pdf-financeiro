@@ -114,34 +114,40 @@ async function lerPDF(file) {
 
 function analisarTexto(texto, nomeArquivo) {
 
-  const linhas = texto.split("\n");
+  // 🔥 limpa espaços bagunçados
+  texto = texto.replace(/\s+/g, " ");
 
-  for (let linha of linhas) {
-    if (linha.includes("resultado do período")) {
+  // 🔍 pega um trecho depois do "resultado do período"
+  const regexLinha = /resultado do período(.{0,200})/i;
+  const matchLinha = texto.match(regexLinha);
 
-      const valores = linha.match(/\(?\d{1,3}(\.\d{3})*,\d{2}\)?/g);
+  if (matchLinha) {
 
-      if (valores && valores.length >= 4) {
+    const trecho = matchLinha[1];
 
-        const saldo = valores[3]; // 4º valor
+    // 🔢 pega todos os números do trecho
+    const valores = trecho.match(/\(?\d{1,3}(\.\d{3})*,\d{2}\)?/g);
 
-        console.log(nomeArquivo + " → saldo:", saldo);
+    if (valores && valores.length >= 4) {
 
-        if (saldo.includes("(") && saldo.includes(")")) {
-          adicionarLista("negativos", nomeArquivo, saldo);
-        } else {
-          adicionarLista("positivos", nomeArquivo, saldo);
-        }
+      const saldo = valores[3]; // 👉 4º valor
 
+      console.log(nomeArquivo + " → valores:", valores);
+      console.log(nomeArquivo + " → saldo final:", saldo);
+
+      if (saldo.includes("(") && saldo.includes(")")) {
+        adicionarLista("negativos", nomeArquivo, saldo);
       } else {
-        console.log(nomeArquivo + " → não encontrou 4 valores");
+        adicionarLista("positivos", nomeArquivo, saldo);
       }
 
-      return;
+    } else {
+      console.log(nomeArquivo + " → ERRO: não encontrou 4 valores", valores);
     }
-  }
 
-  console.log(nomeArquivo + " → não encontrou 'resultado do período'");
+  } else {
+    console.log(nomeArquivo + " → ERRO: não encontrou 'resultado do período'");
+  }
 }
 
 function adicionarLista(tipo, nome, saldo) {
