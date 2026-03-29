@@ -5,6 +5,7 @@
   <title>Analisador de Balancete</title>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
   <style>
     body {
@@ -15,14 +16,9 @@
       padding: 20px;
     }
 
-    h1 {
-      color: #00ffcc;
-    }
+    h1 { color: #00ffcc; }
 
-    input {
-      margin: 20px;
-      padding: 10px;
-    }
+    input { margin: 20px; padding: 10px; }
 
     button {
       padding: 10px 20px;
@@ -32,10 +28,6 @@
       border-radius: 5px;
       color: white;
       cursor: pointer;
-    }
-
-    button:hover {
-      background: #00ccaa;
     }
 
     .box {
@@ -50,18 +42,10 @@
       border-radius: 10px;
     }
 
-    .positivo {
-      background: #063;
-    }
+    .positivo { background: #063; }
+    .negativo { background: #600; }
 
-    .negativo {
-      background: #600;
-    }
-
-    li {
-      margin: 8px 0;
-      text-align: left;
-    }
+    li { margin: 8px 0; text-align: left; }
   </style>
 </head>
 
@@ -71,7 +55,7 @@
 
 <input type="file" id="pdfInput" multiple accept="application/pdf">
 <br>
-<button onclick="baixarNegativos()">⬇️ Baixar PDFs Negativos</button>
+<button onclick="baixarNegativosZIP()">⬇️ Baixar Negativos (ZIP)</button>
 
 <div class="box">
   <div class="coluna positivo">
@@ -87,8 +71,6 @@
 
 <script>
 const input = document.getElementById("pdfInput");
-
-// 🔥 lista de negativos
 let arquivosNegativos = [];
 
 input.addEventListener("change", async (event) => {
@@ -156,9 +138,6 @@ function analisarTexto(texto, nomeArquivo, fileAtual) {
         posSaldo + saldoBruto.length + 15
       );
 
-      console.log(nomeArquivo + " → saldo:", saldo);
-      console.log(nomeArquivo + " → contexto:", contexto);
-
       const ehNegativo =
         saldo.startsWith("(") ||
         saldo.endsWith(")") ||
@@ -166,17 +145,12 @@ function analisarTexto(texto, nomeArquivo, fileAtual) {
 
       if (ehNegativo) {
         adicionarLista("negativos", nomeArquivo, saldo);
-        arquivosNegativos.push({ nome: nomeArquivo, file: fileAtual });
+        arquivosNegativos.push(fileAtual);
       } else {
         adicionarLista("positivos", nomeArquivo, saldo);
       }
 
-    } else {
-      console.log(nomeArquivo + " → erro: não encontrou 4 valores", valores);
     }
-
-  } else {
-    console.log(nomeArquivo + " → não encontrou 'resultado do período'");
   }
 }
 
@@ -187,27 +161,26 @@ function adicionarLista(tipo, nome, saldo) {
   ul.appendChild(li);
 }
 
-// 🔥 DOWNLOAD DOS NEGATIVOS
-function baixarNegativos() {
+// 🔥 DOWNLOAD EM ZIP
+async function baixarNegativosZIP() {
 
   if (arquivosNegativos.length === 0) {
     alert("Nenhum PDF negativo encontrado.");
     return;
   }
 
-  arquivosNegativos.forEach((item) => {
-    const url = URL.createObjectURL(item.file);
+  const zip = new JSZip();
 
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = item.nome;
-
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-
-    URL.revokeObjectURL(url);
+  arquivosNegativos.forEach(file => {
+    zip.file(file.name, file);
   });
+
+  const conteudo = await zip.generateAsync({ type: "blob" });
+
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(conteudo);
+  link.download = "pdfs_negativos.zip";
+  link.click();
 }
 </script>
 
