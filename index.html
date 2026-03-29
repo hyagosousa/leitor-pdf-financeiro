@@ -1,0 +1,135 @@
+# leitor-pdf-financeiro
+Leitor PDF
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Leitor de PDFs</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+
+  <style>
+    body {
+      font-family: Arial;
+      text-align: center;
+      background: #111;
+      color: white;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #00ffcc;
+    }
+
+    input {
+      margin: 20px;
+    }
+
+    .box {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 20px;
+    }
+
+    .coluna {
+      width: 40%;
+      padding: 10px;
+      border-radius: 10px;
+    }
+
+    .positivo {
+      background: #063;
+    }
+
+    .negativo {
+      background: #600;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>📄 Analisador de PDF</h1>
+
+<input type="file" id="pdfInput" multiple accept="application/pdf">
+
+<div class="box">
+  <div class="coluna positivo">
+    <h2>✅ Positivos</h2>
+    <ul id="positivos"></ul>
+  </div>
+
+  <div class="coluna negativo">
+    <h2>❌ Negativos</h2>
+    <ul id="negativos"></ul>
+  </div>
+</div>
+
+<script>
+const input = document.getElementById("pdfInput");
+
+input.addEventListener("change", async (event) => {
+  const arquivos = event.target.files;
+
+  for (let file of arquivos) {
+    const texto = await lerPDF(file);
+    analisarTexto(texto, file.name);
+  }
+});
+
+async function lerPDF(file) {
+  const reader = new FileReader();
+
+  return new Promise((resolve) => {
+    reader.onload = async function () {
+      const typedarray = new Uint8Array(this.result);
+      const pdf = await pdfjsLib.getDocument(typedarray).promise;
+
+      let texto = "";
+
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const pagina = await pdf.getPage(i);
+        const conteudo = await pagina.getTextContent();
+
+        conteudo.items.forEach(item => {
+          texto += item.str + " ";
+        });
+      }
+
+      resolve(texto.toLowerCase());
+    };
+
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function analisarTexto(texto, nomeArquivo) {
+  const linhas = texto.split("\n");
+
+  for (let linha of linhas) {
+    if (linha.includes("resultado do período")) {
+
+      let partes = linha.trim().split(" ");
+      let saldo = partes[partes.length - 1];
+
+      if (saldo.includes("(") && saldo.includes(")")) {
+        adicionarLista("negativos", nomeArquivo);
+      } else {
+        adicionarLista("positivos", nomeArquivo);
+      }
+
+      return;
+    }
+  }
+}
+
+function adicionarLista(tipo, nome) {
+  const ul = document.getElementById(tipo);
+  const li = document.createElement("li");
+  li.textContent = nome;
+  ul.appendChild(li);
+}
+</script>
+
+</body>
+</html>
