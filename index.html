@@ -114,45 +114,54 @@ async function lerPDF(file) {
 
 function analisarTexto(texto, nomeArquivo) {
 
-  // limpa espaços
+  // 🔥 limpa espaços bagunçados
   texto = texto.replace(/\s+/g, " ");
 
   const index = texto.indexOf("resultado do período");
 
   if (index !== -1) {
 
-    const depois = texto.substring(index + 22);
+    // 🔒 pega trecho controlado após o texto
+    const depois = texto.substring(index, index + 300);
 
-    // pega valores SEM depender de parênteses
-    const valores = depois.match(/\d{1,3}(\.\d{3})*,\d{2}/g);
+    // 🔢 regex robusta (aceita OCR e espaços)
+    const valores = depois.match(/\(?\s*\d{1,3}(?:\.\d{3})*,\d{2}\s*\)?/g);
 
     if (valores && valores.length >= 4) {
 
-      const saldo = valores[3];
+      // 🎯 pega o 4º valor real
+      const saldoBruto = valores[3];
+      const saldo = saldoBruto.replace(/\s+/g, "");
 
-      // 🔥 pega trecho ao redor do saldo
-      const posSaldo = depois.indexOf(saldo);
-      const trechoAoRedor = depois.substring(
-        Math.max(0, posSaldo - 10),
-        posSaldo + saldo.length + 10
+      // 🔍 pega contexto ao redor (evita erro)
+      const posSaldo = depois.indexOf(saldoBruto);
+      const contexto = depois.substring(
+        Math.max(0, posSaldo - 15),
+        posSaldo + saldoBruto.length + 15
       );
 
+      console.log(nomeArquivo + " → valores:", valores);
       console.log(nomeArquivo + " → saldo:", saldo);
-      console.log(nomeArquivo + " → trecho:", trechoAoRedor);
+      console.log(nomeArquivo + " → contexto:", contexto);
 
-      // 🔥 DETECÇÃO REAL (funciona mesmo com OCR quebrado)
-      if (trechoAoRedor.includes("(") && trechoAoRedor.includes(")")) {
+      // 🔥 REGRA FINAL (blindada)
+      const ehNegativo =
+        saldo.startsWith("(") ||
+        saldo.endsWith(")") ||
+        contexto.includes("(");
+
+      if (ehNegativo) {
         adicionarLista("negativos", nomeArquivo, saldo);
       } else {
         adicionarLista("positivos", nomeArquivo, saldo);
       }
 
     } else {
-      console.log(nomeArquivo + " → erro: não encontrou 4 valores", valores);
+      console.log(nomeArquivo + " → ERRO: não encontrou 4 valores", valores);
     }
 
   } else {
-    console.log(nomeArquivo + " → não encontrou 'resultado do período'");
+    console.log(nomeArquivo + " → ERRO: não encontrou 'resultado do período'");
   }
 }
 
