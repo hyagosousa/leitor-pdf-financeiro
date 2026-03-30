@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Resumo PDF Positivos</title>
+<title>BMD - Sistema Contábil</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -16,27 +16,38 @@ body {
   padding: 20px; 
 }
 
-/* 🔥 LOGO PROFISSIONAL */
-.logo-container {
-  margin-bottom: 10px;
+/* 🔥 LOGO CONTÁBIL */
+.logo-contabil {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 20px;
 }
 
-.logo-bmd {
-  font-size: 60px;
+.logo-icon {
+  font-size: 35px;
+  background: #00aa88;
+  padding: 12px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,170,136,0.5);
+}
+
+.logo-texto {
+  text-align: left;
+}
+
+.logo-titulo {
+  font-size: 32px;
   font-weight: bold;
-  letter-spacing: 10px;
+  letter-spacing: 3px;
   color: #00ffcc;
-  text-shadow: 
-    0 0 10px #00ffcc,
-    0 0 20px #00aa88,
-    0 0 40px #00aa88;
 }
 
 .logo-sub {
-  font-size: 13px;
+  font-size: 12px;
   color: #aaa;
-  letter-spacing: 3px;
-  margin-top: 5px;
+  letter-spacing: 2px;
 }
 
 h1 { color: #00ffcc; }
@@ -70,17 +81,20 @@ button:hover { background: #008866; }
 
 <body>
 
-<!-- 🔥 LOGO NOVA -->
-<div class="logo-container">
-  <div class="logo-bmd">BMD</div>
-  <div class="logo-sub">ANALISADOR DE BALANCETE</div>
+<!-- 🔥 LOGO PROFISSIONAL -->
+<div class="logo-contabil">
+  <div class="logo-icon">📊</div>
+  <div class="logo-texto">
+    <div class="logo-titulo">BMD</div>
+    <div class="logo-sub">SISTEMA CONTÁBIL</div>
+  </div>
 </div>
 
-<h1>📄 Resumo de PDFs Positivos</h1>
+<h1>Resumo de PDFs Positivos</h1>
 
 <input type="file" id="pdfInput" multiple accept="application/pdf">
 <br>
-<button onclick="exportarExcel()">📊 Exportar para Excel</button>
+<button onclick="exportarExcel()">Exportar para Excel</button>
 
 <table id="tabela">
 <thead>
@@ -118,6 +132,7 @@ extrairInformacoes(texto, file.name);
 }
 });
 
+// 🔥 LEITURA ORGANIZADA
 async function lerPDF(file) {
 const reader = new FileReader();
 
@@ -159,6 +174,7 @@ reader.readAsArrayBuffer(file);
 });
 }
 
+// 🏢 NOME EMPRESA
 function pegarNomeEmpresa(texto) {
 const linhas = texto.split("\n");
 
@@ -175,9 +191,10 @@ return linha.toUpperCase();
 }
 }
 
-return "Não identificado";
+return "NÃO IDENTIFICADO";
 }
 
+// 🔢 CONVERSÃO
 function converterParaNumero(valor) {
 if (!valor || valor === "-") return 0;
 
@@ -215,6 +232,7 @@ if (!numeros) return "-";
 return numeros[numeros.length - 1];
 }
 
+// 🔥 PROCESSAMENTO
 function extrairInformacoes(texto, nomeArquivo) {
 
 const nomeEmpresa = pegarNomeEmpresa(texto);
@@ -231,6 +249,7 @@ const vMercadoria = converterParaNumero(mercadoria);
 const vServicos = converterParaNumero(servicos);
 const vSimples = converterParaNumero(simples);
 
+// cálculos
 const calcProdutos = vProdutos * 0.08;
 const calcMercadoria = vMercadoria * 0.08;
 const calcServicos = vServicos * 0.32;
@@ -239,12 +258,14 @@ const calcSimples = vSimples * 0.05;
 const totalServicos = calcServicos + calcSimples;
 const totalGeral = calcProdutos + calcMercadoria + calcSimples;
 
+// comparação
 const comparacao1 = totalServicos > vResultado ? "MAIOR" : "MENOR";
 const comparacao2 = totalGeral > vResultado ? "MAIOR" : "MENOR";
 
 const classe1 = comparacao1 === "MAIOR" ? "maior" : "menor";
 const classe2 = comparacao2 === "MAIOR" ? "maior" : "menor";
 
+// tabela
 const tbody = document.getElementById("tabelaResumo");
 const tr = document.createElement("tr");
 
@@ -265,6 +286,7 @@ tr.innerHTML = `
 tbody.appendChild(tr);
 }
 
+// 📊 EXPORTAR EXCEL
 function exportarExcel() {
 const tabela = document.getElementById("tabela");
 const wb = XLSX.utils.table_to_book(tabela, { sheet: "Resumo" });
@@ -275,3 +297,4 @@ XLSX.writeFile(wb, "Resumo_PDFs.xlsx");
 
 </body>
 </html>
+
